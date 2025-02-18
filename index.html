@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Tic Tac Toe</title>
+</head>
+<style>
+    .grid-item {
+        text-align: center;
+        border: 1px solid black;
+        border-left: 0px;
+        border-top: 0px;
+        box-sizing: border-box;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .no-border-bottom {
+        border-bottom: 0px;
+    }
+    .no-border-right {
+        border-right: 0px;
+    }
+
+    .game-container {
+        width: 480px;
+        align-self: center;
+        display: grid;
+        grid-template-columns: auto auto auto;
+        box-sizing: border-box;
+    }
+
+    @media screen and (max-width: 480px) {
+        .game-container-sm {
+            width: 360px;
+            padding: 10px 0;
+        }
+    }
+
+    @media screen and (max-width: 360px) {
+        .game-container-sm {
+            width: 260px;
+            padding: 0px; 
+        }
+    }
+</style>
+
+<script>
+    let currentPlayer = "x"
+    let stepCounter = 0
+    let gameHistory = []
+
+    function onPressItem (id) {
+        const tile = document.getElementById(id)
+        const isTileAlreadyFilled = !!tile.textContent
+        const isXTurn = currentPlayer === 'x'
+        if (!isTileAlreadyFilled) {
+            stepCounter++
+            
+            if (isXTurn) {
+                tile.textContent = 'X'
+                currentPlayer = 'o'
+            } else {
+                tile.textContent = 'O'
+                currentPlayer = 'x'
+            }
+
+            if (stepCounter >= 5) {
+                const winner = checkWinner()
+                if (winner) {
+                    handleWinGame(winner)
+
+                    gameHistory.push(winner)
+
+                    updateGameHistory()
+                }
+            }
+            
+            
+            const isAllTilesFilled = stepCounter === 9
+            if (isAllTilesFilled) {
+                gameHistory.push(null)
+                handleDraw()
+            }
+        }
+    }
+
+    function updateGameHistory() {
+        let xTotalWin = 0
+        let oTotalWin = 0
+        
+        gameHistory.forEach(t => {
+            if (t === 'X') {
+                xTotalWin++
+            } else if (t === 'O') {
+                oTotalWin++
+            }
+        })
+        
+        document.getElementById('x-history').textContent = xTotalWin
+        document.getElementById('o-history').textContent = oTotalWin
+    }
+
+    function checkWinner() {
+        const tiles = document.getElementsByClassName('grid-item')
+
+        function checkOne() {
+            const x = [[1,3,4], [3], [2,3], [1], [1]]
+            const y = [0,1,2,3,6]
+            const res =
+                y
+                    .map((t, idx) => {
+                        if (tiles.item(t).textContent) {
+                            const q = findWinner(t + 1, x[idx])
+                            return q
+                        }
+                    })
+                    .filter(t => !!t)
+
+            return res[0]
+        }
+        const win = checkOne()
+        return win
+    }
+
+    function findWinner(start, acc) {
+        const tiles = document.getElementsByClassName('grid-item')
+        const winner = acc
+            .map(x => {
+                return findThreePeat(start, start + (x * 2), x)
+            })
+            .filter(t => t !== null)
+
+
+        return winner.length ? winner[0] : null
+    }
+
+    function findThreePeat(start, end, acc) {
+        let arr = []
+        for (let index = start; index <= end; index += acc) {
+            const tile = document.getElementById(index)
+            arr.push(tile.textContent)
+        }
+
+        const isAllMatched = arr.every(t => {
+            return t === arr[0]
+        })
+
+        return isAllMatched ? arr[0] : null
+    }
+
+
+    function handleDraw() {
+        const resetGameDialog = document.getElementById('reset-game-dialog')
+        resetGameDialog.showModal()
+    }
+
+    function resetGame() {
+        const resetGameDialog = document.getElementById('reset-game-dialog')
+        const tiles = document.getElementsByClassName('grid-item')
+        const length = tiles.length;
+        
+        for (let index = 0; index < length; index++) {
+            tiles.item(index).textContent = ""
+        }
+
+        stepCounter = 0
+        currentPlayer = 'x'
+        resetGameDialog.close()
+    }
+
+    function handleWinGame(winner) {
+        const resetGameDialog = document.getElementById('reset-game-dialog')
+        const dialogTitle = document.getElementById('dialog-title')
+        const title = `${winner} is win!`
+
+        dialogTitle.textContent = title
+
+        resetGameDialog.showModal()
+    }
+
+    
+</script>
+<body>
+    <div style="display: flex; flex-direction: column; justify-content: center; row-gap: 16px;">
+        <div>
+            <h3 style="text-align: center;">Play Tic-Tac-Toe</h3>
+        </div>
+
+        <div class="game-container game-container-sm">
+            <div onclick="onPressItem(1)" id="1" class="grid-item"></div>
+            <div onclick="onPressItem(2)" id="2" class="grid-item"></div>
+            <div onclick="onPressItem(3)" id="3" class="grid-item no-border-right"></div>
+            <div onclick="onPressItem(4)" id="4" class="grid-item"></div>
+            <div onclick="onPressItem(5)" id="5" class="grid-item"></div>
+            <div onclick="onPressItem(6)" id="6" class="grid-item no-border-right"></div>
+            <div onclick="onPressItem(7)" id="7" class="grid-item no-border-bottom"></div>
+            <div onclick="onPressItem(8)" id="8" class="grid-item no-border-bottom"></div>
+            <div onclick="onPressItem(9)" id="9" class="grid-item no-border-bottom no-border-right"></div>
+        </div>
+
+        <!-- Game History -->
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h4>Game History</h4>
+            <p>X: <span id="x-history" >0</span></p>
+            <p>O: <span id="o-history" >0</span></p>
+        </div>
+
+        <!-- Reset Game Dialog -->
+         <dialog id="reset-game-dialog">
+            
+            <p id="dialog-title">Game is over.</p>
+            <p>Click to reset</p>
+            <button onclick="resetGame()">Reset Game</button>
+         </dialog>
+
+
+
+    </div>
+</body>
+</html>
+
